@@ -40,22 +40,16 @@
             position: relative;
         }
 
-        /* Background Logo */
-        body::before {
-            content: '';
+        /* Background Canvas */
+        #bg-canvas {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: min(70vh, 70vw);
-            height: min(70vh, 70vw);
-            background-image: url('LOGO.jpg');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.08;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
             z-index: 0;
+            opacity: 1;
         }
 
         /* Header */
@@ -265,12 +259,6 @@
             nav {
                 gap: 1rem;
             }
-
-            body::before {
-                width: 85vw;
-                height: 85vw;
-                opacity: 0.05;
-            }
         }
 
         /* Cursor effect */
@@ -299,6 +287,7 @@
     </style>
 </head>
 <body>
+    <canvas id="bg-canvas"></canvas>
     <div class="cursor-dot" id="cursor"></div>
 
     <header>
@@ -362,6 +351,333 @@
             document.getElementById('home').style.display = 'none';
             document.getElementById('works').classList.add('active');
         }
+
+        // Generative Art Background - 3 Patterns
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let time = 0;
+        let pattern = Math.floor(Math.random() * 3); // 0, 1, 2
+        
+        // Pattern-specific data
+        let lines = [];
+        let particles = [];
+        let scanLines = [];
+        let networkNodes = [];
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initPattern();
+        }
+        
+        // Draw "d" logo
+        function drawLogo(x, y, size, alpha = 1) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = size * 0.02;
+            
+            const s = size;
+            
+            // Draw stylized "d" - circle with vertical stem
+            // Circle part
+            ctx.beginPath();
+            ctx.arc(x, y, s * 0.35, Math.PI * 0.5, Math.PI * 2.5);
+            ctx.stroke();
+            
+            // Vertical stem
+            ctx.beginPath();
+            ctx.moveTo(x + s * 0.35, y - s * 0.5);
+            ctx.lineTo(x + s * 0.35, y + s * 0.35);
+            ctx.stroke();
+            
+            // Decorative crossing lines (like the logo)
+            ctx.beginPath();
+            ctx.moveTo(x - s * 0.5, y - s * 0.3);
+            ctx.lineTo(x + s * 0.5, y + s * 0.3);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(x - s * 0.4, y + s * 0.4);
+            ctx.lineTo(x + s * 0.2, y - s * 0.5);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Pattern 0: Horizontal scan lines + noise (like image 1)
+        function initScanLines() {
+            scanLines = [];
+            for (let i = 0; i < 8; i++) {
+                scanLines.push({
+                    y: Math.random() * height,
+                    speed: 1.5 + Math.random() * 2.5,
+                    thickness: 1 + Math.random() * 3,
+                    blur: 10 + Math.random() * 40,
+                    brightness: 0.3 + Math.random() * 0.7
+                });
+            }
+            particles = [];
+            for (let i = 0; i < 2000; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2,
+                    alpha: Math.random() * 0.5
+                });
+            }
+        }
+        
+        function drawPattern0() {
+            // Noise particles
+            particles.forEach(p => {
+                p.y += 2 + Math.random() * 2;
+                if (p.y > height) {
+                    p.y = 0;
+                    p.x = Math.random() * width;
+                }
+                ctx.fillStyle = `rgba(26, 26, 26, ${p.alpha * 0.3})`;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            });
+            
+            // Horizontal glow lines
+            scanLines.forEach(line => {
+                line.y += line.speed;
+                if (line.y > height + 50) line.y = -50;
+                
+                const gradient = ctx.createLinearGradient(0, line.y - line.blur, 0, line.y + line.blur);
+                gradient.addColorStop(0, 'rgba(26, 26, 26, 0)');
+                gradient.addColorStop(0.5, `rgba(26, 26, 26, ${line.brightness * 0.15})`);
+                gradient.addColorStop(1, 'rgba(26, 26, 26, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, line.y - line.blur, width, line.blur * 2);
+                
+                // Sharp line in center
+                ctx.strokeStyle = `rgba(26, 26, 26, ${line.brightness * 0.2})`;
+                ctx.lineWidth = line.thickness;
+                ctx.beginPath();
+                ctx.moveTo(0, line.y);
+                ctx.lineTo(width, line.y);
+                ctx.stroke();
+            });
+            
+            // Central "d" logo with glow
+            const pulse = Math.sin(time * 0.015) * 0.1 + 0.9;
+            drawLogo(width / 2, height / 2, Math.min(width, height) * 0.3 * pulse, 0.15);
+        }
+        
+        // Pattern 1: Intersecting lines network (like image 2)
+        function initNetwork() {
+            networkNodes = [];
+            const nodeCount = 15;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                networkNodes.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    connections: []
+                });
+            }
+            
+            // Horizontal base lines
+            lines = [];
+            for (let i = 0; i < 6; i++) {
+                lines.push({
+                    y: height * 0.3 + (height * 0.4) * (i / 5),
+                    alpha: 0.1 + Math.random() * 0.1
+                });
+            }
+        }
+        
+        function drawPattern1() {
+            // Horizontal base lines
+            lines.forEach(line => {
+                ctx.strokeStyle = `rgba(26, 26, 26, ${line.alpha})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, line.y);
+                ctx.lineTo(width, line.y);
+                ctx.stroke();
+            });
+            
+            // Update and draw network
+            networkNodes.forEach(node => {
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                // Bounce
+                if (node.x < 0 || node.x > width) node.vx *= -1;
+                if (node.y < 0 || node.y > height) node.vy *= -1;
+            });
+            
+            // Draw connections
+            ctx.strokeStyle = 'rgba(26, 26, 26, 0.08)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < networkNodes.length; i++) {
+                for (let j = i + 1; j < networkNodes.length; j++) {
+                    const dx = networkNodes[i].x - networkNodes[j].x;
+                    const dy = networkNodes[i].y - networkNodes[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 400) {
+                        const alpha = (1 - dist / 400) * 0.12;
+                        ctx.strokeStyle = `rgba(26, 26, 26, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(networkNodes[i].x, networkNodes[i].y);
+                        ctx.lineTo(networkNodes[j].x, networkNodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Draw diagonal crossing lines through center
+            const cx = width / 2;
+            const cy = height / 2;
+            
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2 + time * 0.002;
+                const len = Math.min(width, height) * 0.8;
+                const wobble = Math.sin(time * 0.008 + i) * 50;
+                
+                ctx.strokeStyle = 'rgba(26, 26, 26, 0.06)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(angle) * (len + wobble), cy + Math.sin(angle) * (len + wobble));
+                ctx.lineTo(cx - Math.cos(angle) * (len + wobble), cy - Math.sin(angle) * (len + wobble));
+                ctx.stroke();
+            }
+            
+            // Small dots at intersections
+            networkNodes.forEach(node => {
+                ctx.fillStyle = 'rgba(26, 26, 26, 0.15)';
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Central "d" logo
+            drawLogo(width / 2, height / 2, Math.min(width, height) * 0.25, 0.12);
+        }
+        
+        // Pattern 2: Floating geometric shapes
+        function initGeometric() {
+            lines = [];
+            const count = 20;
+            
+            for (let i = 0; i < count; i++) {
+                lines.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    length: 80 + Math.random() * 200,
+                    angle: Math.random() * Math.PI * 2,
+                    rotSpeed: (Math.random() - 0.5) * 0.02,
+                    driftX: (Math.random() - 0.5) * 1.5,
+                    driftY: (Math.random() - 0.5) * 1.5
+                });
+            }
+        }
+        
+        function drawPattern2() {
+            // Floating lines
+            ctx.strokeStyle = 'rgba(26, 26, 26, 0.1)';
+            ctx.lineWidth = 1;
+            
+            lines.forEach(line => {
+                line.angle += line.rotSpeed;
+                line.x += line.driftX;
+                line.y += line.driftY;
+                
+                // Wrap
+                if (line.x < -100) line.x = width + 100;
+                if (line.x > width + 100) line.x = -100;
+                if (line.y < -100) line.y = height + 100;
+                if (line.y > height + 100) line.y = -100;
+                
+                const x1 = line.x + Math.cos(line.angle) * line.length / 2;
+                const y1 = line.y + Math.sin(line.angle) * line.length / 2;
+                const x2 = line.x - Math.cos(line.angle) * line.length / 2;
+                const y2 = line.y - Math.sin(line.angle) * line.length / 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            });
+            
+            // Central rotating circles
+            const cx = width / 2;
+            const cy = height / 2;
+            const baseRadius = Math.min(width, height) * 0.2;
+            
+            for (let i = 0; i < 3; i++) {
+                const radius = baseRadius * (0.8 + i * 0.3);
+                const wobble = Math.sin(time * 0.008 + i * 2) * 15;
+                
+                ctx.strokeStyle = `rgba(26, 26, 26, ${0.08 - i * 0.02})`;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius + wobble, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Orbiting points
+            const orbitCount = 6;
+            const points = [];
+            
+            for (let i = 0; i < orbitCount; i++) {
+                const angle = (i / orbitCount) * Math.PI * 2 + time * 0.004;
+                const r = baseRadius * 1.2 + Math.sin(time * 0.008 + i) * 20;
+                points.push({
+                    x: cx + Math.cos(angle) * r,
+                    y: cy + Math.sin(angle) * r
+                });
+            }
+            
+            // Connect points
+            ctx.strokeStyle = 'rgba(26, 26, 26, 0.06)';
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    ctx.beginPath();
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[j].x, points[j].y);
+                    ctx.stroke();
+                }
+            }
+            
+            // Central "d" logo
+            const logoScale = 1 + Math.sin(time * 0.01) * 0.05;
+            drawLogo(cx, cy, Math.min(width, height) * 0.22 * logoScale, 0.15);
+        }
+        
+        function initPattern() {
+            switch (pattern) {
+                case 0: initScanLines(); break;
+                case 1: initNetwork(); break;
+                case 2: initGeometric(); break;
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            switch (pattern) {
+                case 0: drawPattern0(); break;
+                case 1: drawPattern1(); break;
+                case 2: drawPattern2(); break;
+            }
+            
+            time++;
+            requestAnimationFrame(animate);
+        }
+        
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
     </script>
 </body>
 </html>
