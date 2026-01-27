@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電脳戯画</title>
-    <meta name="description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト制作">
+    <title>dennougiga</title>
+    <meta name="description" content="電脳戯画 - オリジナル漫画・ゲーム・イラスト制作">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
@@ -323,19 +323,19 @@
     <div class="cursor-dot" id="cursor"></div>
 
     <header>
-        <div class="logo" onclick="showHome()">電脳戯画</div>
+        <div class="logo" onclick="showHome()">back to home</div>
     </header>
 
     <main>
         <!-- Home Section -->
         <section class="home" id="home">
             <h1 class="title">電脳戯画</h1>
-            <p class="tagline">オリジナル漫画・ゲーム・イラスト</p>
+            <p class="tagline">オリジナルゲーム・漫画・イラスト</p>
             <nav>
                 <a href="https://www.pixiv.net/users/45205654" target="_blank" rel="noopener" data-desc="過去〜新作すべての情報をupしています（ここでしか見られないイラストもあり）">Pixiv</a>
-                <a href="https://www.dmm.co.jp/dc/doujin/-/list/=/article=maker/exclude_ai=0/id=214216/sort=date/" target="_blank" rel="noopener" data-desc="ゲーム・漫画・イラストを販売しています（たまにセールあり）">FANZA</a>
+                <a href="https://dennougiga.booth.pm/" target="_blank" rel="noopener" data-desc="漫画・イラストを販売しています">Booth</a>
                 <a href="https://www.dlsite.com/aix/circle/profile/=/maker_id/RG01014994.html" target="_blank" rel="noopener" data-desc="ゲーム・漫画・イラストを販売しています（たまにセールあり）">DLsite</a>
-                <a href="https://dennougiga.booth.pm/" target="_blank" rel="noopener" data-desc="ゲーム・漫画・イラストを販売しています">Booth</a>
+                <a href="https://www.dmm.co.jp/dc/doujin/-/list/=/article=maker/exclude_ai=0/id=214216/sort=date/" target="_blank" rel="noopener" data-desc="ゲーム・漫画・イラストを販売しています（たまにセールあり）">FANZA</a>
                 <a href="https://twitter.com/DennoGiga" target="_blank" rel="noopener" data-desc="新作のお知らせなど">X</a>
                 <a href="#" onclick="showWorks(event)" data-desc="代表作品一覧">Works</a>
             </nav>
@@ -356,7 +356,7 @@
     </main>
 
     <footer>
-        <p>© 電脳戯画</p>
+        <p>© dennougiga</p>
     </footer>
 
     <script>
@@ -399,19 +399,21 @@
             document.getElementById('works').classList.add('active');
         }
 
-        // Generative Art Background - 3 Patterns
+        // Generative Art Background - 4 Patterns
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         
         let width, height;
         let time = 0;
-        let pattern = Math.floor(Math.random() * 3); // 0, 1, 2
+        let pattern = Math.floor(Math.random() * 4); // 0, 1, 2, 3
         
         // Pattern-specific data
         let lines = [];
         let particles = [];
         let scanLines = [];
         let networkNodes = [];
+        let metalGrid = { cols: 0, rows: 0, dots: [] };
+        let sandParticles = [];
         
         function resize() {
             width = canvas.width = window.innerWidth;
@@ -612,100 +614,156 @@
             drawLogo(width / 2, height / 2, Math.min(width, height) * 0.25, 0.08);
         }
         
-        // Pattern 2: Floating geometric shapes
-        function initGeometric() {
-            lines = [];
-            const count = 20;
+        // Pattern 2: Flowing sand particles (like UTAU cover)
+        function initSandParticles() {
+            sandParticles = [];
+            const count = 3000;
             
             for (let i = 0; i < count; i++) {
-                lines.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    length: 80 + Math.random() * 200,
-                    angle: Math.random() * Math.PI * 2,
-                    rotSpeed: (Math.random() - 0.5) * 0.02,
-                    driftX: (Math.random() - 0.5) * 1.5,
-                    driftY: (Math.random() - 0.5) * 1.5
+                // Create flowing ribbon-like distribution
+                const ribbonY = height * 0.3 + Math.random() * height * 0.4;
+                const spread = Math.sin((i / count) * Math.PI) * 150;
+                
+                sandParticles.push({
+                    x: Math.random() * width * 1.5 - width * 0.25,
+                    y: ribbonY + (Math.random() - 0.5) * spread,
+                    baseY: ribbonY,
+                    size: 0.5 + Math.random() * 1.5,
+                    speed: 0.5 + Math.random() * 1.5,
+                    waveAmp: 20 + Math.random() * 40,
+                    waveFreq: 0.002 + Math.random() * 0.003,
+                    phase: Math.random() * Math.PI * 2,
+                    alpha: 0.1 + Math.random() * 0.2
                 });
             }
         }
         
         function drawPattern2() {
-            // Floating lines
-            ctx.strokeStyle = 'rgba(26, 26, 26, 0.07)';
-            ctx.lineWidth = 1;
+            const cx = width / 2;
+            const cy = height / 2;
             
-            lines.forEach(line => {
-                line.angle += line.rotSpeed;
-                line.x += line.driftX;
-                line.y += line.driftY;
+            // Draw flowing sand particles
+            sandParticles.forEach(p => {
+                // Move particle
+                p.x += p.speed;
                 
-                // Wrap
-                if (line.x < -100) line.x = width + 100;
-                if (line.x > width + 100) line.x = -100;
-                if (line.y < -100) line.y = height + 100;
-                if (line.y > height + 100) line.y = -100;
+                // Wave motion
+                const wave = Math.sin(time * p.waveFreq + p.phase + p.x * 0.003) * p.waveAmp;
+                const y = p.baseY + wave;
                 
-                const x1 = line.x + Math.cos(line.angle) * line.length / 2;
-                const y1 = line.y + Math.sin(line.angle) * line.length / 2;
-                const x2 = line.x - Math.cos(line.angle) * line.length / 2;
-                const y2 = line.y - Math.sin(line.angle) * line.length / 2;
+                // Reset when off screen
+                if (p.x > width + 50) {
+                    p.x = -50;
+                    p.baseY = height * 0.3 + Math.random() * height * 0.4;
+                }
                 
+                // Vary alpha based on position for depth
+                const distFromCenter = Math.abs(y - cy) / (height * 0.3);
+                const alpha = p.alpha * (1 - distFromCenter * 0.5);
+                
+                // Draw particle
                 ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
+                ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(26, 26, 26, ${alpha})`;
+                ctx.fill();
+            });
+            
+            // Central "d" logo
+            const logoAlpha = 0.06 + Math.sin(time * 0.005) * 0.02;
+            drawLogo(cx, cy, Math.min(width, height) * 0.25, logoAlpha);
+        }
+        
+        // Pattern 3: Metallic dot grid (like Sakamoto album cover)
+        function initMetalGrid() {
+            const spacing = 35;
+            metalGrid.cols = Math.ceil(width / spacing) + 2;
+            metalGrid.rows = Math.ceil(height / spacing) + 2;
+            metalGrid.spacing = spacing;
+            metalGrid.dots = [];
+            metalGrid.offsetX = 0;
+            metalGrid.offsetY = 0;
+            
+            for (let row = 0; row < metalGrid.rows; row++) {
+                for (let col = 0; col < metalGrid.cols; col++) {
+                    metalGrid.dots.push({
+                        baseX: col * spacing,
+                        baseY: row * spacing,
+                        phase: Math.random() * Math.PI * 2,
+                        speed: 0.01 + Math.random() * 0.02
+                    });
+                }
+            }
+        }
+        
+        function drawPattern3() {
+            const cx = width / 2;
+            const cy = height / 2;
+            
+            // Slow drift movement
+            metalGrid.offsetX += 0.3;
+            metalGrid.offsetY += 0.15;
+            
+            // Draw metallic dot grid
+            metalGrid.dots.forEach((dot, i) => {
+                const col = i % metalGrid.cols;
+                const row = Math.floor(i / metalGrid.cols);
+                
+                // Subtle wave animation + drift
+                const wave = Math.sin(time * dot.speed + dot.phase) * 3;
+                let x = dot.baseX + wave + metalGrid.offsetX;
+                let y = dot.baseY + wave * 0.5 + metalGrid.offsetY;
+                
+                // Wrap around
+                x = ((x % (width + 70)) + (width + 70)) % (width + 70) - 35;
+                y = ((y % (height + 70)) + (height + 70)) % (height + 70) - 35;
+                
+                // Distance from center for gradient effect
+                const dx = x - cx;
+                const dy = y - cy;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const maxDist = Math.sqrt(cx * cx + cy * cy);
+                
+                // Metallic highlight effect - varies based on position
+                const highlight = Math.sin(time * 0.005 + col * 0.15 + row * 0.15) * 0.5 + 0.5;
+                const baseAlpha = 0.06 + highlight * 0.04;
+                const sizeVar = 1 + Math.sin(time * 0.008 + dot.phase) * 0.15;
+                
+                // Draw outer ring (embossed effect)
+                const radius = 8 * sizeVar;
+                
+                // Light edge (top-left)
+                ctx.beginPath();
+                ctx.arc(x, y, radius, Math.PI * 0.75, Math.PI * 1.75);
+                ctx.strokeStyle = `rgba(26, 26, 26, ${baseAlpha * 0.5})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                // Dark edge (bottom-right)
+                ctx.beginPath();
+                ctx.arc(x, y, radius, Math.PI * -0.25, Math.PI * 0.75);
+                ctx.strokeStyle = `rgba(26, 26, 26, ${baseAlpha * 1.2})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                // Inner circle
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(26, 26, 26, ${baseAlpha * 0.8})`;
+                ctx.lineWidth = 1;
                 ctx.stroke();
             });
             
-            // Central rotating circles
-            const cx = width / 2;
-            const cy = height / 2;
-            const baseRadius = Math.min(width, height) * 0.2;
-            
-            for (let i = 0; i < 3; i++) {
-                const radius = baseRadius * (0.8 + i * 0.3);
-                const wobble = Math.sin(time * 0.008 + i * 2) * 15;
-                
-                ctx.strokeStyle = `rgba(26, 26, 26, ${0.055 - i * 0.012})`;
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius + wobble, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-            
-            // Orbiting points
-            const orbitCount = 6;
-            const points = [];
-            
-            for (let i = 0; i < orbitCount; i++) {
-                const angle = (i / orbitCount) * Math.PI * 2 + time * 0.004;
-                const r = baseRadius * 1.2 + Math.sin(time * 0.008 + i) * 20;
-                points.push({
-                    x: cx + Math.cos(angle) * r,
-                    y: cy + Math.sin(angle) * r
-                });
-            }
-            
-            // Connect points
-            ctx.strokeStyle = 'rgba(26, 26, 26, 0.04)';
-            for (let i = 0; i < points.length; i++) {
-                for (let j = i + 1; j < points.length; j++) {
-                    ctx.beginPath();
-                    ctx.moveTo(points[i].x, points[i].y);
-                    ctx.lineTo(points[j].x, points[j].y);
-                    ctx.stroke();
-                }
-            }
-            
-            // Central "d" logo
-            const logoScale = 1 + Math.sin(time * 0.01) * 0.05;
-            drawLogo(cx, cy, Math.min(width, height) * 0.22 * logoScale, 0.1);
+            // Central "d" logo with metallic feel
+            const logoAlpha = 0.08 + Math.sin(time * 0.008) * 0.02;
+            drawLogo(cx, cy, Math.min(width, height) * 0.28, logoAlpha);
         }
         
         function initPattern() {
             switch (pattern) {
                 case 0: initScanLines(); break;
                 case 1: initNetwork(); break;
-                case 2: initGeometric(); break;
+                case 2: initSandParticles(); break;
+                case 3: initMetalGrid(); break;
             }
         }
         
@@ -716,6 +774,7 @@
                 case 0: drawPattern0(); break;
                 case 1: drawPattern1(); break;
                 case 2: drawPattern2(); break;
+                case 3: drawPattern3(); break;
             }
             
             time++;
