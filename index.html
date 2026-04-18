@@ -3,787 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dennougiga</title>
-    <meta name="description" content="電脳戯画 - オリジナル漫画・ゲーム・イラスト制作">
+    <title>dennougiga GAMES</title>
+    <meta name="description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト">
+    <meta property="og:title" content="dennougiga GAMES">
+    <meta property="og:description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Shippori+Mincho:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            --bg: #fafafa;
-            --text: #1a1a1a;
-            --text-muted: #666;
-            --accent: #1a1a1a;
-            --border: #e0e0e0;
+            --bg:        #f6f4ef;
+            --surface:   #faf9f5;
+            --ink:       #0e0e0e;
+            --ink-soft:  #4a4a48;
+            --ink-mute:  #9b9893;
+            --rule:      #e5e1d8;
+            --accent:    #0e0e0e;
+            --hero-grad: linear-gradient(90deg,
+                          rgba(246,244,239,0) 0%,
+                          rgba(246,244,239,0) 65%,
+                          rgba(246,244,239,0.55) 85%,
+                          rgba(246,244,239,0.95) 100%);
         }
 
-        html {
-            font-size: 16px;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
         }
 
         body {
+            background: var(--bg);
+            color: var(--ink);
             font-family: 'Zen Kaku Gothic New', sans-serif;
             font-weight: 300;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            letter-spacing: 0.02em;
-            line-height: 1.8;
-            position: relative;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        /* Background Canvas */
-        #bg-canvas {
+        /* ── Subtle paper grain (whole viewport) ────────────────────── */
+        body::after {
+            content: '';
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
+            pointer-events: none;
+            z-index: 99;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+            mix-blend-mode: multiply;
+            opacity: 0.55;
+        }
+
+        /* ═══════════════════════════════════════════════════════════ */
+        /*  Layout                                                     */
+        /* ═══════════════════════════════════════════════════════════ */
+        .stage {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        /* ── Hero (left) ────────────────────────────────────────────── */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .hero__img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
+            object-fit: cover;
+            object-position: center center;
+            transform: scale(1.03);
+            animation: heroReveal 1.8s cubic-bezier(.16,.84,.28,1) forwards,
+                       kenburns 40s ease-in-out infinite alternate;
+            opacity: 0;
+        }
+
+        @keyframes heroReveal {
+            from { opacity: 0; transform: scale(1.08); }
+            to   { opacity: 1; transform: scale(1.03); }
+        }
+
+        @keyframes kenburns {
+            0%   { transform: scale(1.03) translate(0, 0); }
+            100% { transform: scale(1.09) translate(-1.5%, -1%); }
+        }
+
+        /* Right-edge fade into content panel */
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--hero-grad);
             pointer-events: none;
-            z-index: 0;
-            opacity: 1;
         }
 
-        /* Header */
-        header {
-            padding: 2rem 3rem;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 100;
+        /* Editorial caption on hero (top-left) */
+        .hero__caption {
+            position: absolute;
+            top: 2.5rem;
+            left: 2.5rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.38em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            opacity: 0;
+            animation: fadeSlow 1.2s ease 0.9s forwards;
+            z-index: 2;
         }
 
-        .logo {
-            font-size: 0.9rem;
-            font-weight: 400;
-            letter-spacing: 0.15em;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
+        .hero__caption::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 1px;
+            background: currentColor;
+            vertical-align: middle;
+            margin-right: 0.7rem;
         }
 
-        .logo:hover {
-            opacity: 0.5;
-        }
-
-        /* Main Content */
-        main {
-            flex: 1;
+        /* ── Panel (right) ──────────────────────────────────────────── */
+        .panel {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
-            padding: 8rem 3rem 4rem;
+            padding: 3.5rem 4rem;
+            max-width: 560px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Logo */
+        .brand {
             opacity: 0;
-            animation: fadeIn 1.2s ease forwards;
-            animation-delay: 0.3s;
-            position: relative;
-            z-index: 1;
+            animation: fadeSlide 1s ease 0.35s forwards;
         }
 
-        @keyframes fadeIn {
-            to { opacity: 1; }
+        .brand__mark {
+            display: block;
+            width: 180px;
+            max-width: 55%;
+            height: auto;
+            margin-bottom: 0.6rem;
+            filter: none;
         }
 
-        /* Home Section */
-        .home {
-            text-align: center;
-            max-width: 600px;
+        .brand__mark img {
+            display: block;
+            width: 100%;
+            height: auto;
         }
 
-        .title {
-            font-size: clamp(2rem, 6vw, 3.5rem);
+        .brand__tagline {
+            font-family: 'Shippori Mincho', serif;
             font-weight: 300;
-            letter-spacing: 0.3em;
-            margin-bottom: 2rem;
+            font-size: 0.82rem;
+            letter-spacing: 0.25em;
+            color: var(--ink-soft);
+            margin-top: 1.2rem;
+        }
+
+        .brand__tagline-en {
+            display: block;
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 0.68rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--ink-mute);
+            margin-top: 0.5rem;
+            font-weight: 400;
+        }
+
+        /* Divider */
+        .rule {
+            width: 48px;
+            height: 1px;
+            background: var(--ink-mute);
+            margin: 2.8rem 0 1.6rem;
             opacity: 0;
-            animation: slideUp 0.8s ease forwards;
-            animation-delay: 0.5s;
+            animation: fadeSlide 1s ease 0.55s forwards;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .tagline {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 4rem;
+        /* Section label */
+        .section-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.62rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--ink-mute);
+            margin-bottom: 1.4rem;
             opacity: 0;
-            animation: slideUp 0.8s ease forwards;
-            animation-delay: 0.7s;
+            animation: fadeSlide 1s ease 0.65s forwards;
         }
 
-        /* Navigation Links */
+        /* Links list */
         nav {
             display: flex;
             flex-direction: column;
-            gap: 1.2rem;
+            border-top: 1px solid var(--rule);
             opacity: 0;
-            animation: slideUp 0.8s ease forwards;
-            animation-delay: 0.9s;
+            animation: fadeSlide 1s ease 0.8s forwards;
         }
 
         nav a {
-            color: var(--text);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: baseline;
+            gap: 1.2rem;
+            padding: 1.15rem 0;
+            border-bottom: 1px solid var(--rule);
+            color: var(--ink);
             text-decoration: none;
-            font-size: 0.85rem;
-            letter-spacing: 0.1em;
-            padding: 0.5rem 0;
+            transition: padding 0.4s cubic-bezier(.16,.84,.28,1),
+                        color   0.3s ease;
             position: relative;
-            transition: all 0.3s ease;
         }
 
-        nav a::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 1px;
-            background: var(--text);
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-
-        nav a:hover {
-            letter-spacing: 0.15em;
-        }
-
-        nav a:hover::after {
-            width: 100%;
-        }
-
-        /* Tooltip */
-        .tooltip {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 0.6rem 1rem;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            z-index: 10;
-            margin-top: 0.5rem;
-        }
-
-        .tooltip.active {
-            opacity: 1;
-        }
-
-        @media (max-width: 600px) {
-            .tooltip {
-                white-space: normal;
-                max-width: 280px;
-                text-align: center;
-            }
-        }
-
-        /* Works Section (Hidden by default) */
-        .works {
-            display: none;
-            max-width: 800px;
-            width: 100%;
-        }
-
-        .works.active {
-            display: block;
-        }
-
-        .section-title {
-            font-size: 0.75rem;
-            letter-spacing: 0.2em;
-            color: var(--text-muted);
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-
-        .works-list {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .work-item {
-            padding: 1.5rem 0;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .work-item:hover {
-            padding-left: 1rem;
-        }
-
-        .work-item h3 {
-            font-weight: 400;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.05em;
-        }
-
-        .work-item p {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-top: 3rem;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-decoration: none;
+        /* Ordinal index (01, 02 …) */
+        nav a .idx {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 0.72rem;
+            color: var(--ink-mute);
             letter-spacing: 0.1em;
+            min-width: 2em;
             transition: color 0.3s ease;
         }
 
-        .back-link:hover {
-            color: var(--text);
+        nav a .name {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 400;
+            font-size: 1.35rem;
+            letter-spacing: 0.08em;
+            transition: letter-spacing 0.4s cubic-bezier(.16,.84,.28,1),
+                        transform 0.4s cubic-bezier(.16,.84,.28,1);
+            transform-origin: left center;
         }
 
-        /* Footer */
-        footer {
-            padding: 2rem 3rem;
-            text-align: center;
+        nav a .arrow {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            color: var(--ink-mute);
+            transform: translateX(-6px);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(.16,.84,.28,1),
+                        opacity 0.3s ease,
+                        color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--ink);
+            padding-left: 1.2rem;
+        }
+
+        nav a:hover .name {
+            letter-spacing: 0.14em;
+        }
+
+        nav a:hover .idx {
+            color: var(--ink);
+        }
+
+        nav a:hover .arrow {
+            transform: translateX(0);
+            opacity: 1;
+            color: var(--ink);
+        }
+
+        /* Link hairline extends on hover */
+        nav a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 1px;
+            background: var(--ink);
+            transition: width 0.5s cubic-bezier(.16,.84,.28,1);
+        }
+        nav a:hover::before { width: 100%; }
+
+        /* Tooltip (description) */
+        nav a .desc {
+            grid-column: 1 / -1;
+            font-family: 'Zen Kaku Gothic New', sans-serif;
             font-size: 0.7rem;
-            color: var(--text-muted);
-            letter-spacing: 0.1em;
-            position: relative;
-            z-index: 1;
+            letter-spacing: 0.08em;
+            color: var(--ink-mute);
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+            margin-top: 0;
+        }
+        nav a:hover .desc {
+            max-height: 40px;
+            opacity: 1;
+            margin-top: 0.4rem;
         }
 
-        /* Mobile */
-        @media (max-width: 600px) {
-            header {
-                padding: 1.5rem 2rem;
+        /* Footer inside panel */
+        .meta {
+            margin-top: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--ink-mute);
+            opacity: 0;
+            animation: fadeSlide 1s ease 1s forwards;
+        }
+
+        .meta__dot {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background: var(--ink);
+            border-radius: 50%;
+            margin-right: 0.6rem;
+            animation: pulse 2.4s ease-in-out infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.35; transform: scale(0.8); }
+        }
+
+        /* ── Animations ─────────────────────────────────────────────── */
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeSlow {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* ── Responsive ─────────────────────────────────────────────── */
+        @media (max-width: 960px) {
+            :root {
+                --hero-grad: linear-gradient(180deg,
+                              rgba(246,244,239,0) 0%,
+                              rgba(246,244,239,0) 55%,
+                              rgba(246,244,239,0.7) 85%,
+                              rgba(246,244,239,1) 100%);
             }
 
-            main {
-                padding: 6rem 2rem 3rem;
+            .stage {
+                grid-template-columns: 1fr;
+                grid-template-rows: 42vh auto;
             }
 
-            footer {
-                padding: 1.5rem 2rem;
+            .hero {
+                min-height: 42vh;
             }
 
-            nav {
-                gap: 1rem;
+            .hero__caption {
+                top: 1.5rem;
+                left: 1.5rem;
+                font-size: 0.62rem;
+            }
+
+            .panel {
+                padding: 2rem 1.75rem 3rem;
+                max-width: 100%;
+                margin-top: -2rem;
+                position: relative;
+                z-index: 2;
+            }
+
+            .brand__mark {
+                width: 150px;
+                max-width: 48%;
+            }
+
+            nav a .name {
+                font-size: 1.2rem;
             }
         }
 
-        /* Cursor effect */
-        .cursor-dot {
-            display: none;
+        @media (max-width: 460px) {
+            .panel {
+                padding: 1.5rem 1.5rem 2.5rem;
+            }
+            .brand__tagline {
+                font-size: 0.75rem;
+                letter-spacing: 0.18em;
+            }
+            nav a {
+                gap: 0.8rem;
+                padding: 1rem 0;
+            }
         }
 
+        /* ── Cursor ─────────────────────────────────────────────────── */
         @media (hover: hover) {
-            .cursor-dot {
-                display: block;
+            .cursor {
                 position: fixed;
-                width: 6px;
-                height: 6px;
-                background: var(--text);
+                width: 6px; height: 6px;
+                background: var(--ink);
                 border-radius: 50%;
                 pointer-events: none;
                 z-index: 9999;
                 opacity: 0;
-                transition: opacity 0.3s ease;
+                transition: opacity 0.3s ease,
+                            width 0.25s ease,
+                            height 0.25s ease;
+                transform: translate(-50%, -50%);
+                mix-blend-mode: difference;
             }
+            body:hover .cursor { opacity: 0.6; }
+            a:hover ~ .cursor,
+            body.link-hover .cursor {
+                width: 20px; height: 20px;
+                opacity: 0.25;
+            }
+        }
 
-            body:hover .cursor-dot {
-                opacity: 0.3;
+        /* ── Accessibility ──────────────────────────────────────────── */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
-    <canvas id="bg-canvas"></canvas>
-    <div class="cursor-dot" id="cursor"></div>
+    <div class="cursor" id="cursor"></div>
 
-    <header>
-        <div class="logo" onclick="showHome()">back to home</div>
-    </header>
+    <div class="stage">
+        <!-- Hero column -->
+        <aside class="hero">
+            <img src="assets/hero.jpeg" alt="" class="hero__img">
+            <span class="hero__caption">dennougiga &nbsp;/&nbsp; 2026</span>
+        </aside>
 
-    <main>
-        <!-- Home Section -->
-        <section class="home" id="home">
-            <h1 class="title">電脳戯画</h1>
-            <p class="tagline">オリジナルゲーム・漫画・イラスト</p>
-            <nav>
-                <a href="https://www.pixiv.net/users/45205654" target="_blank" rel="noopener" data-desc="過去〜新作すべての情報をupしています（ここでしか見られないイラストもあり）">Pixiv</a>
-                <a href="https://dennougiga.booth.pm/" target="_blank" rel="noopener" data-desc="漫画・イラストを販売しています">Booth</a>
-                <a href="https://www.dlsite.com/aix/circle/profile/=/maker_id/RG01014994.html" target="_blank" rel="noopener" data-desc="ゲーム・漫画・イラストを販売しています（たまにセールあり）">DLsite</a>
-                <a href="https://www.dmm.co.jp/dc/doujin/-/list/=/article=maker/exclude_ai=0/id=214216/sort=date/" target="_blank" rel="noopener" data-desc="ゲーム・漫画・イラストを販売しています（たまにセールあり）">FANZA</a>
-                <a href="https://twitter.com/DennoGiga" target="_blank" rel="noopener" data-desc="新作のお知らせなど">X</a>
-                <a href="#" onclick="showWorks(event)" data-desc="代表作品一覧">Works</a>
-            </nav>
-            <div class="tooltip" id="tooltip"></div>
-        </section>
-
-        <!-- Works Section -->
-        <section class="works" id="works">
-            <p class="section-title">SELECTED WORKS</p>
-            <div class="works-list">
-                <a href="https://www.pixiv.net/users/45205654" target="_blank" rel="noopener" class="work-item">
-                    <h3>過去作品アーカイブ</h3>
-                    <p>Pixivにて無料公開中</p>
-                </a>
+        <!-- Content column -->
+        <section class="panel">
+            <div class="brand">
+                <div class="brand__mark">
+                    <img src="assets/logo.png" alt="dennougiga GAMES">
+                </div>
+                <p class="brand__tagline">
+                    オリジナルゲーム・漫画・イラスト
+                    <span class="brand__tagline-en">Original Games · Manga · Illustration</span>
+                </p>
             </div>
-            <a href="#" class="back-link" onclick="showHome(event)">← Back</a>
-        </section>
-    </main>
 
-    <footer>
-        <p>© dennougiga</p>
-    </footer>
+            <div class="rule"></div>
+            <p class="section-label">Links</p>
+
+            <nav>
+                <a href="https://www.dmm.co.jp/dc/doujin/-/list/=/article=maker/exclude_ai=0/id=214216/sort=date/"
+                   target="_blank" rel="noopener">
+                    <span class="idx">01</span>
+                    <span class="name">FANZA</span>
+                    <span class="arrow">→</span>
+                    <span class="desc">ゲーム・漫画・イラスト販売（たまにセールあり）</span>
+                </a>
+                <a href="https://www.dlsite.com/aix/circle/profile/=/maker_id/RG01014994.html"
+                   target="_blank" rel="noopener">
+                    <span class="idx">02</span>
+                    <span class="name">DLsite</span>
+                    <span class="arrow">→</span>
+                    <span class="desc">ゲーム・漫画・イラスト販売（たまにセールあり）</span>
+                </a>
+                <a href="https://www.pixiv.net/users/45205654"
+                   target="_blank" rel="noopener">
+                    <span class="idx">03</span>
+                    <span class="name">Pixiv</span>
+                    <span class="arrow">→</span>
+                    <span class="desc">過去〜新作すべての情報を掲載（限定イラストあり）</span>
+                </a>
+                <a href="https://twitter.com/DennoGiga"
+                   target="_blank" rel="noopener">
+                    <span class="idx">04</span>
+                    <span class="name">X</span>
+                    <span class="arrow">→</span>
+                    <span class="desc">新作のお知らせなど</span>
+                </a>
+            </nav>
+
+            <div class="meta">
+                <span><span class="meta__dot"></span>Now Updating</span>
+                <span>© dennougiga</span>
+            </div>
+        </section>
+    </div>
 
     <script>
         // Custom cursor
         const cursor = document.getElementById('cursor');
-        
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX - 3 + 'px';
-            cursor.style.top = e.clientY - 3 + 'px';
+        document.addEventListener('mousemove', e => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top  = e.clientY + 'px';
         });
-
-        // Tooltip functionality
-        const tooltip = document.getElementById('tooltip');
-        const navLinks = document.querySelectorAll('nav a[data-desc]');
-        
-        navLinks.forEach(link => {
-            link.addEventListener('mouseenter', (e) => {
-                const desc = e.target.getAttribute('data-desc');
-                if (desc) {
-                    tooltip.textContent = desc;
-                    tooltip.classList.add('active');
-                }
-            });
-            
-            link.addEventListener('mouseleave', () => {
-                tooltip.classList.remove('active');
-            });
+        document.querySelectorAll('a').forEach(a => {
+            a.addEventListener('mouseenter', () => document.body.classList.add('link-hover'));
+            a.addEventListener('mouseleave', () => document.body.classList.remove('link-hover'));
         });
-
-        // Navigation
-        function showHome(e) {
-            if (e) e.preventDefault();
-            document.getElementById('home').style.display = 'block';
-            document.getElementById('works').classList.remove('active');
-        }
-
-        function showWorks(e) {
-            if (e) e.preventDefault();
-            document.getElementById('home').style.display = 'none';
-            document.getElementById('works').classList.add('active');
-        }
-
-        // Generative Art Background - 4 Patterns
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        
-        let width, height;
-        let time = 0;
-        let pattern = Math.floor(Math.random() * 4); // 0, 1, 2, 3
-        
-        // Pattern-specific data
-        let lines = [];
-        let particles = [];
-        let scanLines = [];
-        let networkNodes = [];
-        let metalGrid = { cols: 0, rows: 0, dots: [] };
-        let sandParticles = [];
-        
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            initPattern();
-        }
-        
-        // Draw "d" logo
-        function drawLogo(x, y, size, alpha = 1) {
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = '#1a1a1a';
-            ctx.lineWidth = size * 0.02;
-            
-            const s = size;
-            
-            // Draw stylized "d" - circle with vertical stem
-            // Circle part
-            ctx.beginPath();
-            ctx.arc(x, y, s * 0.35, Math.PI * 0.5, Math.PI * 2.5);
-            ctx.stroke();
-            
-            // Vertical stem
-            ctx.beginPath();
-            ctx.moveTo(x + s * 0.35, y - s * 0.5);
-            ctx.lineTo(x + s * 0.35, y + s * 0.35);
-            ctx.stroke();
-            
-            // Decorative crossing lines (like the logo)
-            ctx.beginPath();
-            ctx.moveTo(x - s * 0.5, y - s * 0.3);
-            ctx.lineTo(x + s * 0.5, y + s * 0.3);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(x - s * 0.4, y + s * 0.4);
-            ctx.lineTo(x + s * 0.2, y - s * 0.5);
-            ctx.stroke();
-            
-            ctx.restore();
-        }
-        
-        // Pattern 0: Horizontal scan lines + noise (like image 1)
-        function initScanLines() {
-            scanLines = [];
-            for (let i = 0; i < 8; i++) {
-                scanLines.push({
-                    y: Math.random() * height,
-                    speed: 1.5 + Math.random() * 2.5,
-                    thickness: 1 + Math.random() * 3,
-                    blur: 10 + Math.random() * 40,
-                    brightness: 0.3 + Math.random() * 0.7
-                });
-            }
-            particles = [];
-            for (let i = 0; i < 2000; i++) {
-                particles.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    size: Math.random() * 2,
-                    alpha: Math.random() * 0.5
-                });
-            }
-        }
-        
-        function drawPattern0() {
-            // Noise particles
-            particles.forEach(p => {
-                p.y += 2 + Math.random() * 2;
-                if (p.y > height) {
-                    p.y = 0;
-                    p.x = Math.random() * width;
-                }
-                ctx.fillStyle = `rgba(26, 26, 26, ${p.alpha * 0.2})`;
-                ctx.fillRect(p.x, p.y, p.size, p.size);
-            });
-            
-            // Horizontal glow lines
-            scanLines.forEach(line => {
-                line.y += line.speed;
-                if (line.y > height + 50) line.y = -50;
-                
-                const gradient = ctx.createLinearGradient(0, line.y - line.blur, 0, line.y + line.blur);
-                gradient.addColorStop(0, 'rgba(26, 26, 26, 0)');
-                gradient.addColorStop(0.5, `rgba(26, 26, 26, ${line.brightness * 0.1})`);
-                gradient.addColorStop(1, 'rgba(26, 26, 26, 0)');
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, line.y - line.blur, width, line.blur * 2);
-                
-                // Sharp line in center
-                ctx.strokeStyle = `rgba(26, 26, 26, ${line.brightness * 0.12})`;
-                ctx.lineWidth = line.thickness;
-                ctx.beginPath();
-                ctx.moveTo(0, line.y);
-                ctx.lineTo(width, line.y);
-                ctx.stroke();
-            });
-            
-            // Central "d" logo with glow
-            const pulse = Math.sin(time * 0.015) * 0.1 + 0.9;
-            drawLogo(width / 2, height / 2, Math.min(width, height) * 0.3 * pulse, 0.1);
-        }
-        
-        // Pattern 1: Intersecting lines network (like image 2)
-        function initNetwork() {
-            networkNodes = [];
-            const nodeCount = 15;
-            
-            for (let i = 0; i < nodeCount; i++) {
-                networkNodes.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: (Math.random() - 0.5) * 2,
-                    connections: []
-                });
-            }
-            
-            // Horizontal base lines
-            lines = [];
-            for (let i = 0; i < 6; i++) {
-                lines.push({
-                    y: height * 0.3 + (height * 0.4) * (i / 5),
-                    alpha: 0.1 + Math.random() * 0.1
-                });
-            }
-        }
-        
-        function drawPattern1() {
-            // Horizontal base lines
-            lines.forEach(line => {
-                ctx.strokeStyle = `rgba(26, 26, 26, ${line.alpha * 0.6})`;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(0, line.y);
-                ctx.lineTo(width, line.y);
-                ctx.stroke();
-            });
-            
-            // Update and draw network
-            networkNodes.forEach(node => {
-                node.x += node.vx;
-                node.y += node.vy;
-                
-                // Bounce
-                if (node.x < 0 || node.x > width) node.vx *= -1;
-                if (node.y < 0 || node.y > height) node.vy *= -1;
-            });
-            
-            // Draw connections
-            ctx.strokeStyle = 'rgba(26, 26, 26, 0.05)';
-            ctx.lineWidth = 1;
-            
-            for (let i = 0; i < networkNodes.length; i++) {
-                for (let j = i + 1; j < networkNodes.length; j++) {
-                    const dx = networkNodes[i].x - networkNodes[j].x;
-                    const dy = networkNodes[i].y - networkNodes[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 400) {
-                        const alpha = (1 - dist / 400) * 0.08;
-                        ctx.strokeStyle = `rgba(26, 26, 26, ${alpha})`;
-                        ctx.beginPath();
-                        ctx.moveTo(networkNodes[i].x, networkNodes[i].y);
-                        ctx.lineTo(networkNodes[j].x, networkNodes[j].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-            
-            // Draw diagonal crossing lines through center
-            const cx = width / 2;
-            const cy = height / 2;
-            
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2 + time * 0.002;
-                const len = Math.min(width, height) * 0.8;
-                const wobble = Math.sin(time * 0.008 + i) * 50;
-                
-                ctx.strokeStyle = 'rgba(26, 26, 26, 0.04)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(cx + Math.cos(angle) * (len + wobble), cy + Math.sin(angle) * (len + wobble));
-                ctx.lineTo(cx - Math.cos(angle) * (len + wobble), cy - Math.sin(angle) * (len + wobble));
-                ctx.stroke();
-            }
-            
-            // Small dots at intersections
-            networkNodes.forEach(node => {
-                ctx.fillStyle = 'rgba(26, 26, 26, 0.1)';
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            // Central "d" logo
-            drawLogo(width / 2, height / 2, Math.min(width, height) * 0.25, 0.08);
-        }
-        
-        // Pattern 2: Flowing sand particles (like UTAU cover)
-        function initSandParticles() {
-            sandParticles = [];
-            const count = 3000;
-            
-            for (let i = 0; i < count; i++) {
-                // Create flowing ribbon-like distribution
-                const ribbonY = height * 0.3 + Math.random() * height * 0.4;
-                const spread = Math.sin((i / count) * Math.PI) * 150;
-                
-                sandParticles.push({
-                    x: Math.random() * width * 1.5 - width * 0.25,
-                    y: ribbonY + (Math.random() - 0.5) * spread,
-                    baseY: ribbonY,
-                    size: 0.5 + Math.random() * 1.5,
-                    speed: 0.5 + Math.random() * 1.5,
-                    waveAmp: 20 + Math.random() * 40,
-                    waveFreq: 0.002 + Math.random() * 0.003,
-                    phase: Math.random() * Math.PI * 2,
-                    alpha: 0.1 + Math.random() * 0.2
-                });
-            }
-        }
-        
-        function drawPattern2() {
-            const cx = width / 2;
-            const cy = height / 2;
-            
-            // Draw flowing sand particles
-            sandParticles.forEach(p => {
-                // Move particle
-                p.x += p.speed;
-                
-                // Wave motion
-                const wave = Math.sin(time * p.waveFreq + p.phase + p.x * 0.003) * p.waveAmp;
-                const y = p.baseY + wave;
-                
-                // Reset when off screen
-                if (p.x > width + 50) {
-                    p.x = -50;
-                    p.baseY = height * 0.3 + Math.random() * height * 0.4;
-                }
-                
-                // Vary alpha based on position for depth
-                const distFromCenter = Math.abs(y - cy) / (height * 0.3);
-                const alpha = p.alpha * (1 - distFromCenter * 0.5);
-                
-                // Draw particle
-                ctx.beginPath();
-                ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(26, 26, 26, ${alpha})`;
-                ctx.fill();
-            });
-            
-            // Central "d" logo
-            const logoAlpha = 0.06 + Math.sin(time * 0.005) * 0.02;
-            drawLogo(cx, cy, Math.min(width, height) * 0.25, logoAlpha);
-        }
-        
-        // Pattern 3: Metallic dot grid (like Sakamoto album cover)
-        function initMetalGrid() {
-            const spacing = 35;
-            metalGrid.cols = Math.ceil(width / spacing) + 2;
-            metalGrid.rows = Math.ceil(height / spacing) + 2;
-            metalGrid.spacing = spacing;
-            metalGrid.dots = [];
-            metalGrid.offsetX = 0;
-            metalGrid.offsetY = 0;
-            
-            for (let row = 0; row < metalGrid.rows; row++) {
-                for (let col = 0; col < metalGrid.cols; col++) {
-                    metalGrid.dots.push({
-                        baseX: col * spacing,
-                        baseY: row * spacing,
-                        phase: Math.random() * Math.PI * 2,
-                        speed: 0.01 + Math.random() * 0.02
-                    });
-                }
-            }
-        }
-        
-        function drawPattern3() {
-            const cx = width / 2;
-            const cy = height / 2;
-            
-            // Slow drift movement
-            metalGrid.offsetX += 0.3;
-            metalGrid.offsetY += 0.15;
-            
-            // Draw metallic dot grid
-            metalGrid.dots.forEach((dot, i) => {
-                const col = i % metalGrid.cols;
-                const row = Math.floor(i / metalGrid.cols);
-                
-                // Subtle wave animation + drift
-                const wave = Math.sin(time * dot.speed + dot.phase) * 3;
-                let x = dot.baseX + wave + metalGrid.offsetX;
-                let y = dot.baseY + wave * 0.5 + metalGrid.offsetY;
-                
-                // Wrap around
-                x = ((x % (width + 70)) + (width + 70)) % (width + 70) - 35;
-                y = ((y % (height + 70)) + (height + 70)) % (height + 70) - 35;
-                
-                // Distance from center for gradient effect
-                const dx = x - cx;
-                const dy = y - cy;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const maxDist = Math.sqrt(cx * cx + cy * cy);
-                
-                // Metallic highlight effect - varies based on position
-                const highlight = Math.sin(time * 0.005 + col * 0.15 + row * 0.15) * 0.5 + 0.5;
-                const baseAlpha = 0.06 + highlight * 0.04;
-                const sizeVar = 1 + Math.sin(time * 0.008 + dot.phase) * 0.15;
-                
-                // Draw outer ring (embossed effect)
-                const radius = 8 * sizeVar;
-                
-                // Light edge (top-left)
-                ctx.beginPath();
-                ctx.arc(x, y, radius, Math.PI * 0.75, Math.PI * 1.75);
-                ctx.strokeStyle = `rgba(26, 26, 26, ${baseAlpha * 0.5})`;
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-                
-                // Dark edge (bottom-right)
-                ctx.beginPath();
-                ctx.arc(x, y, radius, Math.PI * -0.25, Math.PI * 0.75);
-                ctx.strokeStyle = `rgba(26, 26, 26, ${baseAlpha * 1.2})`;
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-                
-                // Inner circle
-                ctx.beginPath();
-                ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(26, 26, 26, ${baseAlpha * 0.8})`;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            });
-            
-            // Central "d" logo with metallic feel
-            const logoAlpha = 0.08 + Math.sin(time * 0.008) * 0.02;
-            drawLogo(cx, cy, Math.min(width, height) * 0.28, logoAlpha);
-        }
-        
-        function initPattern() {
-            switch (pattern) {
-                case 0: initScanLines(); break;
-                case 1: initNetwork(); break;
-                case 2: initSandParticles(); break;
-                case 3: initMetalGrid(); break;
-            }
-        }
-        
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-            
-            switch (pattern) {
-                case 0: drawPattern0(); break;
-                case 1: drawPattern1(); break;
-                case 2: drawPattern2(); break;
-                case 3: drawPattern3(); break;
-            }
-            
-            time++;
-            requestAnimationFrame(animate);
-        }
-        
-        window.addEventListener('resize', resize);
-        resize();
-        animate();
     </script>
 </body>
 </html>
