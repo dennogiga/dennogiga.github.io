@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dennougiga GAMES</title>
+    <title>dennougiga</title>
     <meta name="description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト">
     <meta property="og:title" content="dennougiga GAMES">
     <meta property="og:description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト">
@@ -148,18 +148,27 @@
         }
 
         .brand__mark {
-            display: block;
-            width: 180px;
-            max-width: 55%;
-            height: auto;
-            margin-bottom: 0.6rem;
-            filter: none;
+            display: flex;
+            align-items: baseline;
+            font-family: 'Cormorant Garamond', serif;
+            line-height: 1;
+            letter-spacing: 0.01em;
+            margin-bottom: 0.4rem;
         }
 
-        .brand__mark img {
-            display: block;
-            width: 100%;
-            height: auto;
+        .brand__mark .dennougiga {
+            font-weight: 400;
+            font-style: normal;
+            font-size: 2.1rem;
+            color: var(--ink);
+        }
+
+        .brand__mark .games {
+            font-weight: 600;
+            font-size: 2.1rem;
+            color: var(--ink-soft);
+            letter-spacing: 0.04em;
+            margin-left: 0.15em;
         }
 
         .brand__tagline {
@@ -385,9 +394,9 @@
                 z-index: 2;
             }
 
-            .brand__mark {
-                width: 150px;
-                max-width: 48%;
+            .brand__mark .dennougiga,
+            .brand__mark .games {
+                font-size: 1.7rem;
             }
 
             nav a .name {
@@ -457,7 +466,7 @@
         <section class="panel">
             <div class="brand">
                 <div class="brand__mark">
-                    <img src="assets/logo.png" alt="dennougiga GAMES">
+                    <span class="dennougiga">dennougiga</span><span class="games">GAMES</span>
                 </div>
                 <p class="brand__tagline">
                     オリジナルゲーム・漫画・イラスト
@@ -474,21 +483,21 @@
                     <span class="idx">01</span>
                     <span class="name">FANZA</span>
                     <span class="arrow">→</span>
-                    <span class="desc">ゲーム・漫画・イラスト販売（たまにセールあり）</span>
+                    <span class="desc">全てのゲーム・漫画はこちら（セールあり）</span>
                 </a>
                 <a href="https://www.dlsite.com/aix/circle/profile/=/maker_id/RG01014994.html"
                    target="_blank" rel="noopener">
                     <span class="idx">02</span>
                     <span class="name">DLsite</span>
                     <span class="arrow">→</span>
-                    <span class="desc">ゲーム・漫画・イラスト販売（たまにセールあり）</span>
+                    <span class="desc">一部のゲーム・漫画（セールあり）</span>
                 </a>
                 <a href="https://www.pixiv.net/users/45205654"
                    target="_blank" rel="noopener">
                     <span class="idx">03</span>
                     <span class="name">Pixiv</span>
                     <span class="arrow">→</span>
-                    <span class="desc">過去〜新作すべての情報を掲載（限定イラストあり）</span>
+                    <span class="desc">漫画サンプルやオフショットなど掲載</span>
                 </a>
                 <a href="https://twitter.com/DennoGiga"
                    target="_blank" rel="noopener">
