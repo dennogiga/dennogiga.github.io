@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dennougiga</title>
+    <title>dennogiga GAMES</title>
     <meta name="description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト">
-    <meta property="og:title" content="dennougiga">
+    <meta property="og:title" content="dennogiga GAMES">
     <meta property="og:description" content="電脳戯画 - オリジナルゲーム・漫画・イラスト">
+    <link rel="icon" type="image/png" href="assets/logo.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,6 +86,19 @@
             opacity: 0;
         }
 
+        /* Floating dust canvas — sits above image, below caption */
+        .hero__dust {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeSlow 2.5s ease 1.2s forwards;
+            mix-blend-mode: screen;
+        }
+
         @keyframes heroReveal {
             from { opacity: 0; transform: scale(1.08); }
             to   { opacity: 1; transform: scale(1.03); }
@@ -116,7 +130,7 @@
             color: var(--ink-soft);
             opacity: 0;
             animation: fadeSlow 1.2s ease 0.9s forwards;
-            z-index: 2;
+            z-index: 3;
         }
 
         .hero__caption::before {
@@ -458,14 +472,15 @@
         <!-- Hero column -->
         <aside class="hero">
             <img src="assets/hero.jpeg" alt="" class="hero__img">
-            <span class="hero__caption">dennougiga &nbsp;/&nbsp; 2026</span>
+            <canvas class="hero__dust" id="dust"></canvas>
+            <span class="hero__caption">dennogiga &nbsp;/&nbsp; 2026</span>
         </aside>
 
         <!-- Content column -->
         <section class="panel">
             <div class="brand">
                 <div class="brand__mark">
-                    <span class="dennougiga">dennougiga</span><span class="games"></span>
+                    <span class="dennougiga">dennogiga</span><span class="games"></span>
                 </div>
                 <p class="brand__tagline">
                     オリジナルゲーム・漫画・イラスト
@@ -482,21 +497,21 @@
                     <span class="idx">01</span>
                     <span class="name">FANZA</span>
                     <span class="arrow">→</span>
-                    <span class="desc">全てのゲーム・漫画はこちら（セールあり）</span>
+                    <span class="desc">ゲーム・漫画・イラスト販売（たまにセールあり）</span>
                 </a>
                 <a href="https://www.dlsite.com/aix/circle/profile/=/maker_id/RG01014994.html"
                    target="_blank" rel="noopener">
                     <span class="idx">02</span>
                     <span class="name">DLsite</span>
                     <span class="arrow">→</span>
-                    <span class="desc">一部のゲーム・漫画（セールあり）</span>
+                    <span class="desc">ゲーム・漫画・イラスト販売（たまにセールあり）</span>
                 </a>
                 <a href="https://www.pixiv.net/users/45205654"
                    target="_blank" rel="noopener">
                     <span class="idx">03</span>
                     <span class="name">Pixiv</span>
                     <span class="arrow">→</span>
-                    <span class="desc">漫画サンプルやオフショットなど掲載</span>
+                    <span class="desc">過去〜新作すべての情報を掲載（限定イラストあり）</span>
                 </a>
                 <a href="https://twitter.com/DennoGiga"
                    target="_blank" rel="noopener">
@@ -525,6 +540,127 @@
             a.addEventListener('mouseenter', () => document.body.classList.add('link-hover'));
             a.addEventListener('mouseleave', () => document.body.classList.remove('link-hover'));
         });
+
+        // ─── Floating dust ─────────────────────────────────────────────
+        // Slow drifting motes that catch a soft light beam, like
+        // sunlight through a window. Each particle has its own
+        // depth (0–1): closer particles are larger, brighter and move
+        // a touch faster; far particles barely move and nearly fade.
+        (() => {
+            const canvas = document.getElementById('dust');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let W, H, raf, motes = [];
+            const COUNT = 60;             // particle count
+            const dpr   = Math.min(window.devicePixelRatio || 1, 2);
+
+            function rand(a, b) { return a + Math.random() * (b - a); }
+
+            function spawn(initial = false) {
+                const depth = Math.random();              // 0 = far, 1 = near
+                return {
+                    x       : Math.random() * W,
+                    y       : initial
+                                ? Math.random() * H
+                                : H + rand(10, 80),       // start below
+                    z       : depth,
+                    r       : 0.4 + depth * 1.6,          // 0.4 – 2.0 px
+                    // Drift very slowly upward; near motes move a bit faster
+                    vy      : -(0.05 + depth * 0.18),
+                    // Sideways drift via sine, plus a small constant breeze
+                    vx      : rand(-0.06, 0.06),
+                    swayAmp : rand(8, 26) * (0.4 + depth * 0.6),
+                    swayFq  : rand(0.0006, 0.0014),
+                    swayPh  : Math.random() * Math.PI * 2,
+                    // Twinkle — gentle alpha breath
+                    twPh    : Math.random() * Math.PI * 2,
+                    twFq    : rand(0.005, 0.012),
+                    baseA   : 0.18 + depth * 0.55,        // far = faint, near = bright
+                };
+            }
+
+            function init() {
+                motes = Array.from({ length: COUNT }, () => spawn(true));
+            }
+
+            function resize() {
+                const rect = canvas.getBoundingClientRect();
+                W = rect.width;
+                H = rect.height;
+                canvas.width  = W * dpr;
+                canvas.height = H * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                init();
+            }
+
+            let t = 0;
+            function frame() {
+                ctx.clearRect(0, 0, W, H);
+
+                for (let i = 0; i < motes.length; i++) {
+                    const m = motes[i];
+
+                    // Update
+                    m.y += m.vy;
+                    m.x += m.vx + Math.sin(t * m.swayFq + m.swayPh) * 0.1;
+
+                    // Recycle when off the top
+                    if (m.y < -10 || m.x < -20 || m.x > W + 20) {
+                        motes[i] = spawn();
+                        motes[i].y = H + rand(5, 40);
+                        continue;
+                    }
+
+                    // Twinkle alpha
+                    const tw    = 0.6 + 0.4 * Math.sin(t * m.twFq + m.twPh);
+                    const alpha = m.baseA * tw;
+
+                    // Glow halo for nearer motes (gives them a "lit" feel)
+                    if (m.z > 0.55) {
+                        const haloR = m.r * 4.5;
+                        const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, haloR);
+                        g.addColorStop(0,   `rgba(255,248,230,${alpha * 0.35})`);
+                        g.addColorStop(0.5, `rgba(255,245,220,${alpha * 0.08})`);
+                        g.addColorStop(1,   'rgba(255,245,220,0)');
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.arc(m.x, m.y, haloR, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // Core mote — warm off-white (catches "window light")
+                    ctx.fillStyle = `rgba(255,250,235,${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                t++;
+                raf = requestAnimationFrame(frame);
+            }
+
+            // Pause when tab is hidden (saves battery)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    cancelAnimationFrame(raf);
+                } else {
+                    raf = requestAnimationFrame(frame);
+                }
+            });
+
+            // Honour reduced-motion preference
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                resize();
+                // Draw a single static frame and stop
+                frame();
+                cancelAnimationFrame(raf);
+                return;
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            frame();
+        })();
     </script>
 </body>
 </html>
